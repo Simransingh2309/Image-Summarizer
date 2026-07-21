@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Summarizer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            padding: 60px 0;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.6em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .form-container {
+            margin-bottom: 30px;
+        }
+
+        input[type="file"] {
+            padding: 15px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background-color: #fafafa;
+            width: 100%;
+            margin-bottom: 20px;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="file"]:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        #result {
+            margin-top: 40px;
+            display: none;
+        }
+
+        #result img {
+            max-width: 90%;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        #caption {
+            font-size: 1.3em;
+            color: #34495e;
+            font-weight: 500;
+            margin-top: 20px;
+        }
+
+        #loading {
+            display: none;
+            margin-top: 20px;
+            color: #007bff;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        @media screen and (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            button {
+                padding: 10px 20px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Image Summarizer</h1>
+
+    <div class="container">
+        <div class="form-container">
+            <form id="upload-form">
+                <input type="file" name="image" accept="image/*" required><br>
+                <button type="button" id="submit-btn">Generate Caption</button>
+            </form>
+        </div>
+
+        <div id="loading">
+            <p>🌀 Processing your image...</p>
+        </div>
+
+        <div id="result">
+            <div id="caption"></div>
+            <img id="output-image" src="" alt="" style="display:none;">
+        </div>
+    </div>
+
+    <script>
+        const submitBtn = document.getElementById('submit-btn');
+        const captionDiv = document.getElementById('caption');
+        const imageEl = document.getElementById('output-image');
+        const resultDiv = document.getElementById('result');
+        const loadingDiv = document.getElementById('loading');
+        const uploadForm = document.getElementById('upload-form');
+
+        submitBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            const fileInput = document.querySelector('input[type="file"]');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                captionDiv.innerText = '❌ Please select an image first.';
+                resultDiv.style.display = 'block';
+                return;
+            }
+
+            // Show loading indicator
+            loadingDiv.style.display = 'block';
+            resultDiv.style.display = 'none';
+
+            const formData = new FormData(uploadForm);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    captionDiv.innerText = "📝 Caption: " + data.caption;
+                    imageEl.src = data.image_path;
+                    imageEl.style.display = 'block';
+                    resultDiv.style.display = 'block';
+                } else {
+                    captionDiv.innerText = "❌ Error: " + (data.error || 'Unknown error');
+                    imageEl.style.display = 'none';
+                    resultDiv.style.display = 'block';
+                }
+            } catch (error) {
+                captionDiv.innerText = "❌ Something went wrong. Please try again.";
+                imageEl.style.display = 'none';
+                resultDiv.style.display = 'block';
+            } finally {
+                loadingDiv.style.display = 'none';
+            }
+        });
+    </script>
+
+</body>
+</html>
